@@ -1,0 +1,50 @@
+create or replace PROCEDURE "COMPARE_AND_REPLACE_SOURCE" 
+(
+  schema1 in varchar2 
+, schema2 in varchar2
+, obj_type in varchar2
+) as 
+    different_lines NUMBER :=0;
+CURSOR schemas_intersect IS
+    SELECT obj1.OBJECT_NAME as name1,obj2.OBJECT_NAME as name2 FROM ALL_OBJECTS obj1
+    FULL  JOIN ALL_OBJECTS obj2
+    ON obj1.OBJECT_NAME=obj2.OBJECT_NAME
+    WHERE obj1.OBJECT_TYPE= obj_type AND obj2.OBJECT_TYPE = obj_TYPE
+    AND obj1.OWNER= schema1 AND obj2.OWNER=schema2;
+begin
+
+    FOR object_name_pair IN ( SELECT obj1.name as name1,obj2.name as name2
+    FROM 
+        (SELECT obj_table1.OBJECT_NAME name
+        FROM  ALL_OBJECTS  obj_table1
+        WHERE obj_table1.OBJECT_TYPE = 'PROCEDURE' AND obj_table1.OWNER='DEV') obj1
+    FULL JOIN
+        (SELECT obj_table2.OBJECT_NAME name 
+        FROM  ALL_OBJECTS  obj_table2
+        WHERE obj_table2.OBJECT_TYPE = 'PROCEDURE' AND obj_table2.OWNER='PROD') obj2
+        ON obj1.name = obj2.name ) LOOP 
+        
+        
+        IF object_name_pair.name1 IS NULL THEN
+            delete_object(schema2,obj_type,object_name_pair.name2);
+        ELSIF object_name_pair.name2 IS NULL THEN
+            create_object(schema2,obj_type,object_name_pair.name1);
+        ELSE
+            SELECT COUNT(*) INTO different_lines
+            FROM all_source src1
+            FULL JOIN all_source src2
+            ON   src1.name = src2.name
+            WHERE
+            src1.name= object_name_pair.name1 AND 
+            src1.line = src2.line
+            AND NOT src1.text = src2.text
+            AND src1.OWNER=schema1 AND src2.OWNER = schema2;
+
+            IF different_lines > 0 THEN
+                replace_object(schema1,schema2,object_name_pair.name1);
+            END IF;
+        
+        END IF;
+    END LOOP;
+
+end compare_and_replace_source;

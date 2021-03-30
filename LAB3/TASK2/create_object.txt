@@ -1,0 +1,23 @@
+create or replace PROCEDURE "CREATE_OBJECT" 
+(
+  schema1_name in varchar2 
+, schema2_name in varchar2
+, obj_type in varchar2 
+, obj_name in varchar2 
+) as 
+    query_string VARCHAR2(100);
+
+begin
+  FOR src_cursor IN (SELECT line,text 
+                        FROM all_source  
+                        WHERE owner=schema1_name AND name=obj_name) LOOP
+                        
+        IF src_cursor.line =1 THEN 
+            query_string := 'CREATE ' || REPLACE(src_cursor.text, LOWER(obj_name),schema2_name || '.' || obj_name);  
+        ELSE 
+         query_string := query_string || src_cursor.text;
+        END IF;
+    END LOOP;
+dbms_output.put_line(query_string);
+EXECUTE IMMEDIATE query_string;
+end create_object;

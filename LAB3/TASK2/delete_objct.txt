@@ -1,0 +1,12 @@
+create or replace PROCEDURE "DELETE_OBJECT" 
+(
+  schema_name in varchar2 
+, obj_type in varchar2 
+, object_name in varchar2 
+) as 
+delete_query VARCHAR(100);
+begin
+    delete_query := 'DROP ' || obj_type || ' ' ||  schema_name || '.' || object_name;
+    dbms_output.put_line('DROP ' || obj_type || ' ' ||  schema_name || '.' || object_name);
+    EXECUTE IMMEDIATE delete_query;
+end delete_object;
