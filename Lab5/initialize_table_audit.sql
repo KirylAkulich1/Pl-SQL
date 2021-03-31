@@ -7,7 +7,8 @@ begin
   FOR i in 1.. table_names.count LOOP
     
     drop_if_exists( table_names(i) || '_AUDIT','TABLE');
-    create_query :='CREATE  TABLE ' || table_names(i) || '_AUDIT ( ID NUMBER PRIMARY KEY , CHANGE_TIME TIMESTAMP ,IS_REVERTED NUMBER ,OPERATION VARCHAR(20) , ID_ROW NUMBER , ';
+    create_query :='CREATE  TABLE ' || table_names(i) 
+        || '_AUDIT ( ID NUMBER PRIMARY KEY , CHANGE_TIME TIMESTAMP ,IS_REVERTED NUMBER ,OPERATION VARCHAR(20) , ID_ROW NUMBER , ';
         FOR table_column in (SELECT column_name, data_type, data_length
                         FROM USER_TAB_COLUMNS
                         WHERE table_name = table_names(i) AND column_name != 'ID') LOOP
